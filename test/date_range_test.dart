@@ -12,6 +12,32 @@ void main() {
     );
   });
 
+  test('lastMonth is the previous complete calendar month, sent as bounds', () {
+    const r = SelectedDateRange.preset(DateRangePreset.lastMonth);
+    final (s, e) = r.bounds;
+    // A whole calendar month: the 1st through that month's last day. These
+    // checks are deliberately now-independent — they characterise the window's
+    // shape, not which month it happens to be.
+    expect(s.day, 1);
+    expect(s.year, e.year);
+    expect(s.month, e.month);
+    expect(DateTime(e.year, e.month, e.day + 1).day, 1); // e is the last day
+    expect(e.isBefore(DateTime.now()), isTrue);
+    expect(r.dayCount, SelectedDateRange.daysBetween(s, e) + 1);
+    expect(r.interval, 'day');
+    // No OpenPanel `range=` token for a calendar month, so the query carries
+    // explicit dates like custom, not `{'range': 'custom'}` alone.
+    expect(r.needsExplicitBounds, isTrue);
+    expect(r.toQuery()['range'], 'custom');
+    expect(r.toQuery().containsKey('startDate'), isTrue);
+    expect(r.toQuery().containsKey('endDate'), isTrue);
+    expect(r.label, 'Last month');
+    // cacheIdentity is stamped by the resolved month start, so a boundary
+    // rollover cannot serve the previous month's data from a fresh cache key.
+    expect(r.cacheIdentity, contains('lastMonth'));
+    expect(r.cacheIdentity, contains(SelectedDateRange.ymd(s)));
+  });
+
   test('previous window has the same length and ends the day before', () {
     final r = SelectedDateRange(
       DateRangePreset.custom,

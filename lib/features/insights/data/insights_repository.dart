@@ -130,7 +130,7 @@ class InsightsRepository {
         'breakdowns': jsonEncode([
           {'name': b.eventProperty},
         ]),
-        if (range.preset == DateRangePreset.custom) ...{
+        if (range.needsExplicitBounds) ...{
           'range': 'custom',
           'startDate': '${SelectedDateRange.ymd(start)}T00:00:00',
           'endDate': '${SelectedDateRange.ymd(end)}T23:59:59',

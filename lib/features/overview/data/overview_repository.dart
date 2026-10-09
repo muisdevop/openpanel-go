@@ -90,7 +90,7 @@ class OverviewRepository {
 
   /// export/charts parses startDate/endDate as ISO datetimes.
   static Map<String, dynamic> _chartRange(SelectedDateRange range) {
-    if (range.preset != DateRangePreset.custom) {
+    if (!range.needsExplicitBounds) {
       return {'range': range.preset.apiRange};
     }
     final (s, e) = range.bounds;

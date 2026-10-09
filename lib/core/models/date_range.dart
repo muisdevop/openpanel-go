@@ -7,6 +7,7 @@ enum DateRangePreset {
   yesterday('Yesterday', 'yesterday'),
   last7Days('Last 7 days', '7d'),
   last30Days('Last 30 days', '30d'),
+  lastMonth('Last month', 'custom'),
   custom('Custom', 'custom');
 
   const DateRangePreset(this.label, this.apiRange);
@@ -49,6 +50,10 @@ class SelectedDateRange {
       ),
       DateRangePreset.last7Days => (t.subtract(const Duration(days: 6)), t),
       DateRangePreset.last30Days => (t.subtract(const Duration(days: 29)), t),
+      DateRangePreset.lastMonth => (
+        DateTime(t.year, t.month - 1, 1),
+        DateTime(t.year, t.month, 0),
+      ),
       DateRangePreset.custom => (
         customStart ?? t,
         customEnd ?? customStart ?? t,
@@ -81,9 +86,16 @@ class SelectedDateRange {
   /// Hourly buckets for single-day windows, daily otherwise.
   String get interval => dayCount <= 1 ? 'hour' : 'day';
 
+  /// Presets the API cannot resolve from a single `range=` token, so the
+  /// request must carry explicit `yyyy-MM-dd` bounds. A calendar month is not
+  /// one of OpenPanel's rolling windows, so `lastMonth` lands here alongside
+  /// `custom`; every query builder keys off this rather than `== custom`.
+  bool get needsExplicitBounds =>
+      preset == DateRangePreset.custom || preset == DateRangePreset.lastMonth;
+
   /// Query params for the current window.
   Map<String, dynamic> toQuery() {
-    if (preset != DateRangePreset.custom) {
+    if (!needsExplicitBounds) {
       return {'range': preset.apiRange};
     }
     final (s, e) = bounds;
@@ -123,6 +135,14 @@ class SelectedDateRange {
   String get cacheIdentity => switch (preset) {
     DateRangePreset.today ||
     DateRangePreset.yesterday => '${preset.name}:${ymd(DateTime.now())}',
+    DateRangePreset.lastMonth =>
+      // The resolved window jumps a whole month at each rollover (Oct 31 maps
+      // to September, Nov 1 to October), so a date-free key could serve the
+      // wrong month from a <24h-old cache entry. Stamping the window's own
+      // start keeps it constant for the month and invalidates exactly at the
+      // boundary — unlike the rolling presets, where TTL staleness is bounded
+      // by a day, not a month. `bounds.$1` is the window start.
+      '${preset.name}:${ymd(bounds.$1)}',
     _ => jsonEncode(toJson()),
   };
 

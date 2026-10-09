@@ -15,7 +15,7 @@ Flutter, Material 3 dark, no WebView. It works with OpenPanel Cloud
 | **Insights** | Top referrers (bar chart), top pages, countries (pie with flags), devices (donut), browsers and OS. Tap any card for the full list. | `GET /insights/{projectId}/{column}`, falls back to `GET /export/charts?breakdowns=` |
 | **Settings** | Multiple projects (add, edit, switch, remove), clear cache, log out (wipes every secret), about. | none |
 
-Also included: date ranges (Today, Yesterday, 7d, 30d, Custom), pull-to-refresh,
+Also included: date ranges (Today, Yesterday, 7d, 30d, Last month, Custom), pull-to-refresh,
 shimmer skeletons, drawn empty states, offline fallback for KPIs, and polling
 that pauses both when the app is backgrounded and when its tab is hidden behind
 another one. Animations (shimmer, the Live pulse) are skipped when the device
@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 56 tests
+flutter test              # 57 tests
 flutter test --coverage
 ```
 
@@ -278,7 +278,9 @@ status → message mappings, secret redaction, the Hive cache layer (TTL, the
 across reopen), the polling mixin (a slow tick does not overlap, a hidden tab
 does not poll, dispose kills the timer), tolerant value coercion (a metric
 serialised as a string, or one malformed event row, costs that value instead of
-blanking the screen), cache-key identity for day-granularity presets, and the
+blanking the screen), cache-key identity for day- and month-granularity presets
+(the calendar-month window is stamped by its own start, so a rollover cannot
+serve the wrong month from a fresh cache entry), and the
 auth-rejection hook (a 401/403 is reported once and never retried, a 5xx is
 retried and must not look like a rejected credential) plus a widget test over
 the real shell (a 401 unmounts all four tabs into one credential prompt, while
