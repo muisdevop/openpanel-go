@@ -247,59 +247,10 @@ class _LiveHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 8, 10),
       child: Row(
         children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: onToggle,
-            child: Semantics(
-              // The dot and the colour carry "live" visually; a screen reader
-              // got only the word. The label states what tapping does.
-              button: true,
-              excludeSemantics: true,
-              label: paused
-                  ? 'Auto-refresh paused, tap to resume'
-                  : 'Refreshing every $intervalSeconds seconds, tap to pause',
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 12,
-                ),
-                // 48dp minimum tap target (Material); the row's own content is
-                // only ~16dp, so padding alone left the pill ~42dp tall. A
-                // constraint guarantees the floor regardless of the text
-                // line-height, which the InkWell's hit area otherwise tracks.
-                constraints: const BoxConstraints(minHeight: 48),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: (paused ? AppColors.textMuted : AppColors.live)
-                      .withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: (paused ? AppColors.textMuted : AppColors.live)
-                        .withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    paused
-                        ? const Icon(
-                            Icons.pause_rounded,
-                            size: 12,
-                            color: AppColors.textMuted,
-                          )
-                        : const _PulsingDot(),
-                    const SizedBox(width: 6),
-                    Text(
-                      paused ? 'Paused' : 'Live',
-                      style: t.labelMedium?.copyWith(
-                        color: paused ? AppColors.textMuted : AppColors.live,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          LiveTogglePill(
+            paused: paused,
+            intervalSeconds: intervalSeconds,
+            onToggle: onToggle,
           ),
           const SizedBox(width: 12),
           if (liveVisitors != null)
@@ -326,6 +277,77 @@ class _LiveHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
         ],
+      ),
+    );
+  }
+}
+
+/// The "Live"/"Paused" auto-refresh toggle. Its hit box is constrained to
+/// Material's 48dp minimum rather than left to the label's line-height, which
+/// the platform's font metrics and accessibility scaling would otherwise drive
+/// down under the floor.
+class LiveTogglePill extends StatelessWidget {
+  const LiveTogglePill({
+    super.key,
+    required this.paused,
+    required this.intervalSeconds,
+    required this.onToggle,
+  });
+
+  final bool paused;
+  final int intervalSeconds;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onToggle,
+      child: Semantics(
+        // The dot and the colour carry "live" visually; a screen reader got
+        // only the word. The label states what tapping does.
+        button: true,
+        excludeSemantics: true,
+        label: paused
+            ? 'Auto-refresh paused, tap to resume'
+            : 'Refreshing every $intervalSeconds seconds, tap to pause',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          constraints: const BoxConstraints(minHeight: 48),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: (paused ? AppColors.textMuted : AppColors.live).withValues(
+              alpha: 0.12,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: (paused ? AppColors.textMuted : AppColors.live).withValues(
+                alpha: 0.4,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              paused
+                  ? const Icon(
+                      Icons.pause_rounded,
+                      size: 12,
+                      color: AppColors.textMuted,
+                    )
+                  : const _PulsingDot(),
+              const SizedBox(width: 6),
+              Text(
+                paused ? 'Paused' : 'Live',
+                style: t.labelMedium?.copyWith(
+                  color: paused ? AppColors.textMuted : AppColors.live,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 69 tests
+flutter test              # 72 tests
 flutter test --coverage
 ```
 
@@ -292,7 +292,9 @@ defects that only a device run exposed have tests too: the keyboard's Next key
 walking the login form instead of landing on a suffix button, the field keys
 that stop a hidden state leaking sideways when Self-hosted inserts a field, a
 failing poll tick reaching the error handler instead of the zone, a keychain
-read failure saying so on the edit form, and the date bar at 320dp.
+read failure saying so on the edit form, and the date bar at 320dp. The
+Live/Paused toggle is a named widget whose test pins the 48dp tap target and the
+screen-reader label, so neither can silently regress.
 
 `flutter analyze` must stay clean. `analysis_options.yaml` turns on
 `discarded_futures`, `directives_ordering`, `cancel_subscriptions`,
