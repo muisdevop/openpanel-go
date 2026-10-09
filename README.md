@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 57 tests
+flutter test              # 69 tests
 flutter test --coverage
 ```
 
@@ -280,7 +280,10 @@ does not poll, dispose kills the timer), tolerant value coercion (a metric
 serialised as a string, or one malformed event row, costs that value instead of
 blanking the screen), cache-key identity for day- and month-granularity presets
 (the calendar-month window is stamped by its own start, so a rollover cannot
-serve the wrong month from a fresh cache entry), and the
+serve the wrong month from a fresh cache entry), formatter edge cases (the
+percent-change guard returning null for an empty prior window instead of
+NaN/Infinity, UTC vs local vs epoch-second/millis date parsing, and a malformed
+saved URL falling back to its raw string rather than crashing Settings), and the
 auth-rejection hook (a 401/403 is reported once and never retried, a 5xx is
 retried and must not look like a rejected credential) plus a widget test over
 the real shell (a 401 unmounts all four tabs into one credential prompt, while
