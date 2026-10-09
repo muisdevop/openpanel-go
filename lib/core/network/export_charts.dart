@@ -73,6 +73,18 @@ List<String> _names(Object? raw) {
   return [raw.toString()];
 }
 
-double? _num(Object? raw) => raw is num ? raw.toDouble() : null;
+/// num passes through; a numeric string is what proxies and some self-hosted
+/// builds send for `count` — the same coercion `asDouble` exists for, and the
+/// reader every other API numeric uses. Under num-only parsing a "12" fell
+/// through to 0, which the insights breakdown fallback then *drops*
+/// (`total <= 0`), silently hiding a top page/country.
+///
+/// Genuine absence stays null so the `?? value` fallback and the "server didn't
+/// send a previous period" distinction (vs a real 0) keep working.
+double? _num(Object? raw) => switch (raw) {
+  final num n => n.toDouble(),
+  final String s => double.tryParse(s),
+  _ => null,
+};
 
 double? _numIn(Object? raw) => raw is Map ? _num(raw['value']) : null;

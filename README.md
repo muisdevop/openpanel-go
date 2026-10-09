@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 76 tests
+flutter test              # 78 tests
 flutter test --coverage
 ```
 
@@ -298,7 +298,11 @@ screen-reader label, so neither can silently regress. Repository query tests
 drive the real overview chart fetch and the insights `/export/charts` fallback —
 the two paths that hand-assemble dates from `needsExplicitBounds` instead of
 reusing the model's `toQuery()` — to lock the calendar-month window carrying its
-resolved `startDate`/`endDate` rather than a bare `range=custom`.
+resolved `startDate`/`endDate` rather than a bare `range=custom`. The
+`/export/charts` parser now tolerates string-serialised counts the same way the
+rest of the app does (a `"7"` becoming `0` would drop that row from the insights
+breakdown fallback), while keeping a genuinely absent previous period null so
+the comparison overlay can't plot a false zero.
 
 `flutter analyze` must stay clean. `analysis_options.yaml` turns on
 `discarded_futures`, `directives_ordering`, `cancel_subscriptions`,

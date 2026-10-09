@@ -31,6 +31,47 @@ void main() {
     expect(s.single.label, isNull);
   });
 
+  test('string-serialised chart counts parse instead of becoming 0', () {
+    // Proxies and some self-hosted builds send `count` as a JSON string — the
+    // exact case asDouble covers everywhere else. Under num-only parsing a "7"
+    // became 0, and the insights breakdown fallback drops a 0 total, silently
+    // hiding a top page/country from the list.
+    final body = {
+      'series': [
+        {
+          'names': ['session_start', 'google.com'],
+          'data': [
+            {'date': '2026-10-07', 'count': '7'},
+            {'date': '2026-10-08', 'count': '3.5'},
+          ],
+        },
+      ],
+    };
+    final s = parseExportCharts(body);
+    expect(s.single.points.first.count, 7);
+    expect(s.single.total, 10.5);
+  });
+
+  test('an absent previous stays null rather than a false zero', () {
+    // The dashed previous-period overlay must not plot 0 where the server sent
+    // no comparison. String tolerance must not collapse that null distinction.
+    final body = {
+      'series': [
+        {
+          'names': ['screen_view'],
+          'data': [
+            {'date': '2026-10-08', 'count': '4'},
+            {'date': '2026-10-09', 'count': 6, 'previous': {'value': '2'}},
+          ],
+        },
+      ],
+    };
+    final s = parseExportCharts(body);
+    expect(s.single.points.first.previous, isNull);
+    // A string inside the {value: ...} wrapper is tolerated too.
+    expect(s.single.points.last.previous, 2);
+  });
+
   test(
     'breakdown series expose their value as the label and sum the buckets',
     () {
