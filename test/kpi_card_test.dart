@@ -35,7 +35,9 @@ Color deltaColor(WidgetTester tester, String pct) =>
     tester.widget<Text>(find.text(pct)).style!.color!;
 
 void main() {
-  testWidgets('a higher-is-better metric rising reads positive', (tester) async {
+  testWidgets('a higher-is-better metric rising reads positive', (
+    tester,
+  ) async {
     await pumpCard(tester, change: 20);
     expect(deltaColor(tester, '20.0%'), AppColors.positive);
     expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
@@ -86,11 +88,12 @@ void main() {
     expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
   });
 
-  testWidgets('no previous period shows an explicit message, not a fake delta', (
-    tester,
-  ) async {
-    await pumpCard(tester, change: null);
-    expect(find.text('No previous data'), findsOneWidget);
-    expect(find.textContaining('%'), findsNothing);
-  });
+  testWidgets(
+    'no previous period shows an explicit message, not a fake delta',
+    (tester) async {
+      await pumpCard(tester, change: null);
+      expect(find.text('No previous data'), findsOneWidget);
+      expect(find.textContaining('%'), findsNothing);
+    },
+  );
 }

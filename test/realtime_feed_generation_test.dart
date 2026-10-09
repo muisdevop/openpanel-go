@@ -13,11 +13,7 @@ import 'package:openpanel_go/features/realtime/data/events_repository.dart';
 /// A scripted page handed out by [_FakeRepo] in call order, with the delay that
 /// lets a test force two in-flight fetches to complete out of order.
 class _Page {
-  const _Page({
-    required this.events,
-    required this.delay,
-    this.skipped = 0,
-  });
+  const _Page({required this.events, required this.delay, this.skipped = 0});
   final List<OpenPanelEvent> events;
   final Duration delay;
   final int skipped;

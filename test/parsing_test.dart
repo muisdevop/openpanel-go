@@ -61,7 +61,11 @@ void main() {
           'names': ['screen_view'],
           'data': [
             {'date': '2026-10-08', 'count': '4'},
-            {'date': '2026-10-09', 'count': 6, 'previous': {'value': '2'}},
+            {
+              'date': '2026-10-09',
+              'count': 6,
+              'previous': {'value': '2'},
+            },
           ],
         },
       ],
