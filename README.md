@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 54 tests
+flutter test              # 56 tests
 flutter test --coverage
 ```
 
@@ -282,14 +282,22 @@ blanking the screen), cache-key identity for day-granularity presets, and the
 auth-rejection hook (a 401/403 is reported once and never retried, a 5xx is
 retried and must not look like a rejected credential) plus a widget test over
 the real shell (a 401 unmounts all four tabs into one credential prompt, while
-Settings stays reachable so the project can still be fixed or removed).
+Settings stays reachable so the project can still be fixed or removed). The
+defects that only a device run exposed have tests too: the keyboard's Next key
+walking the login form instead of landing on a suffix button, the field keys
+that stop a hidden state leaking sideways when Self-hosted inserts a field, a
+failing poll tick reaching the error handler instead of the zone, a keychain
+read failure saying so on the edit form, and the date bar at 320dp.
 
 `flutter analyze` must stay clean. `analysis_options.yaml` turns on
-`unawaited_futures`, `directives_ordering`, `cancel_subscriptions`,
+`discarded_futures`, `directives_ordering`, `cancel_subscriptions`,
 `close_sinks`, `curly_braces_in_flow_control_structures` and a few others on top
-of `flutter_lints`; `unawaited_futures` in particular is what keeps the
-"fire-and-forget a mutation" bug family from coming back. CI
-(`.github/workflows/build.yml`) pins the Flutter version, runs codegen and
+of `flutter_lints`; `discarded_futures` (which subsumes `unawaited_futures`, the
+lint that only fires inside an async body) is what keeps the "fire-and-forget a
+mutation" bug family from coming back — a future nobody holds has no handler
+left but the zone's.
+
+CI (`.github/workflows/build.yml`) pins the Flutter version, runs codegen and
 fails if `git diff` is non-empty (generated files must be committed and match),
 asserts `dart format` is clean, runs the tests with coverage, then builds the
 APK and the app bundle.
