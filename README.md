@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 80 tests
+flutter test              # 87 tests
 flutter test --coverage
 ```
 
@@ -305,7 +305,11 @@ breakdown fallback), while keeping a genuinely absent previous period null so
 the comparison overlay can't plot a false zero. The live feed's notifier-level
 generation guard is tested directly: a build whose request loses to a later poll
 must re-assert the poll's list rather than rewind the feed, and a poll issued
-after the build still wins by issue order even when it resolves last.
+after the build still wins by issue order even when it resolves last. A KPI-card
+widget test locks the delta semantics the overview depends on: a lower-is-better
+metric (bounce rate) rising reads red while the arrow still points up, a near-zero
+change reads neutral rather than a green upward tick, and an absent prior period
+says "No previous data" instead of a fabricated 0%.
 
 `flutter analyze` must stay clean. `analysis_options.yaml` turns on
 `discarded_futures`, `directives_ordering`, `cancel_subscriptions`,
