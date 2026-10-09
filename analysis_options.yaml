@@ -1,0 +1,27 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+
+linter:
+  # flutter_lints is already active through the include above. The rules below
+  # are not decoration: each one maps to a defect this project shipped with.
+  rules:
+    # A future dropped behind a tap handler is how the project-selection and
+    # pull-to-refresh bugs landed (unawaited select/set, unawaited clipboard).
+    - unawaited_futures
+    # Import drift made every diff in review harder to read.
+    - directives_ordering
+    # Leaked animation/subscription handles (the pulsing live dot, polling
+    # timers) outliving the widget that owned them.
+    - cancel_subscriptions
+    - close_sinks
+    - test_types_in_equals
+    - throw_in_finally
+    - avoid_slow_async_io
+    - curly_braces_in_flow_control_structures

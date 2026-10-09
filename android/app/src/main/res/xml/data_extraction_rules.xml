@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App data holds the Hive boxes (project ids, base URLs, cached analytics
+  payloads) and the secure-storage entry for every client secret. None of it
+  must leave the device through cloud backup or device-to-device migration —
+  Keychain/EncryptedSharedPreferences do not survive a restore to another
+  device, so a migrated copy would surface either as garbage or as a
+  decryptable blob depending on the OEM.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,67 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Pinned deliberately. `channel: stable` alone let the runner pick whatever
+  # Flutter shipped on its image, so the same commit could build green locally
+  # and fail on a different generated-code or analyzer version.
+  FLUTTER_VERSION: '3.47.2'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      # Codegen output is committed, so a PR that changes a provider or a model
+      # without regenerating must fail instead of silently building stale code.
+      - name: Fail on uncommitted codegen or formatting
+        run: |
+          git diff --exit-code
+          dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - run: flutter build apk --release
+      - name: Label the artifact by how it is actually signed
+        run: |
+          if [ -f android/key.properties ]; then
+            echo "ARTIFACT_NAME=openpanel-go-apk-release-signed" >> "$GITHUB_ENV"
+          else
+            echo "ARTIFACT_NAME=openpanel-go-apk-DEBUG-SIGNED" >> "$GITHUB_ENV"
+            echo "::warning::android/key.properties is absent, so this 'release' APK is signed with the debug key. Do not distribute it."
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: git diff --exit-code
+      # no-codesign means this only proves the toolchain and pod integrate; it
+      # produces no installable artifact, so nothing is uploaded here.
+      - run: flutter build ios --release --no-codesign

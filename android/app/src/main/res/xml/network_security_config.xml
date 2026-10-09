@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Client secrets go in request headers, so plaintext transport leaks them.
+  Cleartext stays off globally and is permitted only for the loopback and
+  emulator addresses people use to reach a self-hosted OpenPanel while
+  developing — otherwise `http://10.0.2.2:3000` would fail with an opaque
+  connection error and the temptation is to turn cleartext on for everything.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
