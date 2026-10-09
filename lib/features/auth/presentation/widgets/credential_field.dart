@@ -70,25 +70,33 @@ class _CredentialFieldState extends State<CredentialField> {
           helperMaxLines: 2,
           helperStyle: const TextStyle(color: AppColors.textMuted),
           prefixIcon: widget.icon == null ? null : Icon(widget.icon, size: 20),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.secret)
-                IconButton(
-                  tooltip: _obscured ? 'Show' : 'Hide',
-                  icon: Icon(
-                    _obscured
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+          // The suffix buttons sit between this field and the next one in
+          // reading order, and IconButton is focusable by default, so
+          // TextInputAction.next landed on "Paste" instead of the following
+          // field. Keeping them out of the traversal order makes the keyboard's
+          // Next key walk the form; they stay tappable and keep their semantics.
+          suffixIcon: FocusTraversalGroup(
+            descendantsAreTraversable: false,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.secret)
+                  IconButton(
+                    tooltip: _obscured ? 'Show' : 'Hide',
+                    icon: Icon(
+                      _obscured
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    onPressed: () => setState(() => _obscured = !_obscured),
                   ),
-                  onPressed: () => setState(() => _obscured = !_obscured),
+                IconButton(
+                  tooltip: 'Paste',
+                  icon: const Icon(Icons.content_paste_rounded, size: 20),
+                  onPressed: _paste,
                 ),
-              IconButton(
-                tooltip: 'Paste',
-                icon: const Icon(Icons.content_paste_rounded, size: 20),
-                onPressed: _paste,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

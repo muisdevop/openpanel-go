@@ -241,6 +241,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 20),
               if (_host == _Host.selfHosted)
                 CredentialField(
+                  // Keys, not positions. This field appears and disappears with
+                  // the host toggle, so every field below it would otherwise be
+                  // matched to the previous field's State — and that State owns
+                  // _obscured, which made Client ID render as an unrevealable
+                  // password once Self-hosted was selected.
+                  key: const ValueKey('baseUrl'),
                   controller: _baseUrl,
                   label: 'Base URL',
                   hint: 'https://api.yourdomain.com',
@@ -270,6 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                 ),
               CredentialField(
+                key: const ValueKey('name'),
                 controller: _name,
                 label: 'Project name',
                 hint: 'My website',
@@ -277,18 +284,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 required: false,
               ),
               CredentialField(
+                key: const ValueKey('projectId'),
                 controller: _projectId,
                 label: 'Project ID',
                 hint: 'From the dashboard URL or Project Settings',
                 icon: Icons.folder_outlined,
               ),
               CredentialField(
+                key: const ValueKey('clientId'),
                 controller: _clientId,
                 label: 'Client ID',
                 hint: 'xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx',
                 icon: Icons.badge_outlined,
               ),
               CredentialField(
+                key: const ValueKey('secret'),
                 controller: _secret,
                 label: 'Client Secret',
                 hint: editing

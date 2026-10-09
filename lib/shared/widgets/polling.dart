@@ -44,7 +44,26 @@ mixin PollingMixin<T extends StatefulWidget> on State<T> {
   void _tick() {
     if (!mounted || _busy || !shouldPoll()) return;
     _busy = true;
-    unawaited(Future.sync(onTick).whenComplete(() => _busy = false));
+    unawaited(
+      Future.sync(onTick)
+          // `unawaited` drops the future without ever looking at its error, so
+          // a tick that threw — a 401 from a rotated secret, a timeout after
+          // the retries — escaped as an unhandled zone exception on every
+          // interval. Polling is best-effort: the next tick retries and the
+          // screen keeps showing the last good data, but the failure still has
+          // to reach the error handler instead of vanishing.
+          .catchError((Object error, StackTrace stackTrace) {
+            FlutterError.reportError(
+              FlutterErrorDetails(
+                exception: error,
+                stack: stackTrace,
+                library: 'polling',
+                context: ErrorDescription('while running a poll tick'),
+              ),
+            );
+          })
+          .whenComplete(() => _busy = false),
+    );
   }
 
   void _cancel() => _timer?.cancel();

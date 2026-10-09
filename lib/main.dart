@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +12,31 @@ import 'core/router/app_router.dart';
 import 'core/storage/local_store.dart';
 import 'shared/theme/app_theme.dart';
 
-Future<void> main() async {
+void main() {
+  // Nothing in a Flutter app awaits every future. A poll tick that outlives its
+  // widget, or a refresh whose screen is swapped away mid-flight, throws into a
+  // zone that has no handler by default: the error is written to logcat, the
+  // isolate carries on, and a release user is left staring at a card that
+  // quietly stopped updating with nothing recording why. Routing every escape
+  // through one handler keeps failures attributable and gives a crash reporter
+  // a single place to hook.
+  runZonedGuarded<void>(
+    () {
+      FlutterError.onError = FlutterError.presentError;
+      _bootstrap();
+    },
+    (error, stack) => FlutterError.presentError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'unawaited',
+        context: ErrorDescription('an error escaped a future nothing awaited'),
+      ),
+    ),
+  );
+}
+
+Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   timeago.setLocaleMessages('en_short', timeago.EnShortMessages());
   // Every string, date and number format in this app is English. Pinning the
