@@ -12,6 +12,13 @@ import 'core/router/app_router.dart';
 import 'core/storage/local_store.dart';
 import 'shared/theme/app_theme.dart';
 
+/// Set before `runApp` is entered, so the zone handler can tell a startup
+/// failure from a later one. `runApp` only *schedules* the attach
+/// (`scheduleAttachRootWidget`), so `binding.rootElement` is still null for a
+/// turn after a healthy launch — checking it would let a background error
+/// replace a running app with an error page.
+bool _appLaunched = false;
+
 void main() {
   // Nothing in a Flutter app awaits every future. A poll tick that outlives its
   // widget, or a refresh whose screen is swapped away mid-flight, throws into a
@@ -40,18 +47,12 @@ void main() {
       // throws on a corrupted or unreadable Hive box, and before this the app
       // died with a logcat line and a black screen — which on a release device,
       // where nobody reads logcat, is indistinguishable from a hung install.
-      _showStartupFailure(error);
+      if (!_appLaunched) _showStartupFailure(error);
     },
   );
 }
 
 void _showStartupFailure(Object error) {
-  // Idempotent, so it still works if the failure landed before `_bootstrap` got
-  // to it. `rootElement` is what distinguishes a startup crash from any later
-  // one: once the app is on screen, replacing its tree with an error page would
-  // turn a recoverable background failure into a dead app.
-  final binding = WidgetsFlutterBinding.ensureInitialized();
-  if (binding.rootElement != null) return;
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -122,6 +123,7 @@ Future<void> _bootstrap() async {
 
   final store = await LocalStore.open();
 
+  _appLaunched = true;
   runApp(
     ProviderScope(
       overrides: [localStoreProvider.overrideWithValue(store)],
