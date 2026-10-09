@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 74 tests
+flutter test              # 76 tests
 flutter test --coverage
 ```
 
@@ -294,9 +294,11 @@ that stop a hidden state leaking sideways when Self-hosted inserts a field, a
 failing poll tick reaching the error handler instead of the zone, a keychain
 read failure saying so on the edit form, and the date bar at 320dp. The
 Live/Paused toggle is a named widget whose test pins the 48dp tap target and the
-screen-reader label, so neither can silently regress. A repository query test
-drives the real overview chart fetch to lock the calendar-month window carrying
-its resolved `startDate`/`endDate` rather than a bare `range=custom`.
+screen-reader label, so neither can silently regress. Repository query tests
+drive the real overview chart fetch and the insights `/export/charts` fallback —
+the two paths that hand-assemble dates from `needsExplicitBounds` instead of
+reusing the model's `toQuery()` — to lock the calendar-month window carrying its
+resolved `startDate`/`endDate` rather than a bare `range=custom`.
 
 `flutter analyze` must stay clean. `analysis_options.yaml` turns on
 `discarded_futures`, `directives_ordering`, `cancel_subscriptions`,
