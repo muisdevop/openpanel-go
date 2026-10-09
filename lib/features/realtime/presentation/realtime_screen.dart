@@ -263,6 +263,12 @@ class _LiveHeader extends StatelessWidget {
                   horizontal: 10,
                   vertical: 12,
                 ),
+                // 48dp minimum tap target (Material); the row's own content is
+                // only ~16dp, so padding alone left the pill ~42dp tall. A
+                // constraint guarantees the floor regardless of the text
+                // line-height, which the InkWell's hit area otherwise tracks.
+                constraints: const BoxConstraints(minHeight: 48),
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: (paused ? AppColors.textMuted : AppColors.live)
                       .withValues(alpha: 0.12),
