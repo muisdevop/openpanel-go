@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -159,14 +161,25 @@ class SettingsScreen extends ConsumerWidget {
                       urlHost(p.baseUrl),
                       style: const TextStyle(color: AppColors.textMuted),
                     ),
-                    onTap: () =>
+                    onTap: () {
+                      // `select` never throws: it swallows its own persistence
+                      // failure after applying the in-memory selection.
+                      unawaited(
                         ref.read(activeProjectIdProvider.notifier).select(p.id),
+                      );
+                    },
                     trailing: PopupMenuButton<String>(
                       tooltip: 'Edit or remove ${p.name}',
                       icon: const Icon(Icons.more_horiz_rounded),
                       onSelected: (v) {
-                        if (v == 'edit') context.push('/login?edit=${p.id}');
-                        if (v == 'delete') _confirmDelete(context, ref, p);
+                        if (v == 'edit') {
+                          unawaited(context.push('/login?edit=${p.id}'));
+                        }
+                        // Handles its own failures (snack bar) and re-checks
+                        // `context.mounted` before navigating.
+                        if (v == 'delete') {
+                          unawaited(_confirmDelete(context, ref, p));
+                        }
                       },
                       itemBuilder: (_) => const [
                         PopupMenuItem(value: 'edit', child: Text('Edit')),
@@ -188,7 +201,7 @@ class SettingsScreen extends ConsumerWidget {
                     // /login routes and the close gesture left the user on a
                     // second blank form.
                     if (ModalRoute.of(context)?.isCurrent ?? true) {
-                      context.push('/login');
+                      unawaited(context.push('/login'));
                     }
                   },
                 ),

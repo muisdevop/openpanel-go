@@ -266,7 +266,7 @@ branch mounted, so without that check the Overview tab polled a request every
 ## Tests
 
 ```bash
-flutter test              # 52 tests
+flutter test              # 54 tests
 flutter test --coverage
 ```
 

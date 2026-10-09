@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
@@ -48,8 +50,23 @@ class _RealtimeScreenState extends ConsumerState<RealtimeScreen>
   }
 
   Future<void> _refreshFeed() async {
-    await ref.read(realtimeEventsProvider.notifier).poll();
-    ref.invalidate(liveVisitorsProvider);
+    // `poll()` already catches everything it can raise, but reaching the
+    // notifier is not covered: `onRetry` is a `VoidCallback`, so this future is
+    // handed to a signature that discards it and any error here would have
+    // nowhere to go but the zone.
+    try {
+      await ref.read(realtimeEventsProvider.notifier).poll();
+      ref.invalidate(liveVisitorsProvider);
+    } on Object catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'realtime',
+          context: ErrorDescription('while refreshing the live event feed'),
+        ),
+      );
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -118,12 +135,15 @@ class _RealtimeScreenState extends ConsumerState<RealtimeScreen>
             skipped: notifier.skipped,
             intervalSeconds: pollInterval.inSeconds,
             staleSince: notifier.lastUpdated,
-            onToggle: () => setState(() {
-              _paused = !_paused;
+            onToggle: () {
+              final paused = !_paused;
+              setState(() => _paused = paused);
               // Without this the feed stays frozen on whatever was on screen
               // when it was paused, and the gap looks like a quiet site.
-              if (!_paused) _refreshFeed();
-            }),
+              // Kept out of setState: starting network work inside a state
+              // mutation is how re-entrant builds get scheduled.
+              if (!paused) unawaited(_refreshFeed());
+            },
           ),
           // A poll that fails after a successful one left the "Live" dot
           // pulsing over data that never changed. Say so instead.

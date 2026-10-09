@@ -38,8 +38,24 @@ class _CredentialFieldState extends State<CredentialField> {
   late bool _obscured = widget.secret;
 
   Future<void> _paste() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text?.trim();
+    final String? text;
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      text = data?.text?.trim();
+    } on Object catch (e, st) {
+      // Android raises a PlatformException when the read lands while the app
+      // isn't focused. `IconButton.onPressed` is a VoidCallback, so this future
+      // is discarded by the framework and the error used to escape to the zone.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'clipboard',
+          context: ErrorDescription('while reading the clipboard to paste'),
+        ),
+      );
+      return;
+    }
     // The login screen disposes its controllers while this read is in flight
     // if the user leaves; writing to a disposed controller throws.
     if (!mounted || text == null || text.isEmpty) return;

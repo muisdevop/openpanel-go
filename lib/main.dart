@@ -23,14 +23,77 @@ void main() {
   runZonedGuarded<void>(
     () {
       FlutterError.onError = FlutterError.presentError;
-      _bootstrap();
+      unawaited(_bootstrap());
     },
-    (error, stack) => FlutterError.presentError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stack,
-        library: 'unawaited',
-        context: ErrorDescription('an error escaped a future nothing awaited'),
+    (error, stack) {
+      FlutterError.presentError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'unawaited',
+          context: ErrorDescription(
+            'an error escaped a future nothing awaited',
+          ),
+        ),
+      );
+      // Startup failures have no widget tree to display them. `LocalStore.open`
+      // throws on a corrupted or unreadable Hive box, and before this the app
+      // died with a logcat line and a black screen — which on a release device,
+      // where nobody reads logcat, is indistinguishable from a hung install.
+      _showStartupFailure(error);
+    },
+  );
+}
+
+void _showStartupFailure(Object error) {
+  // Idempotent, so it still works if the failure landed before `_bootstrap` got
+  // to it. `rootElement` is what distinguishes a startup crash from any later
+  // one: once the app is on screen, replacing its tree with an error page would
+  // turn a recoverable background failure into a dead app.
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  if (binding.rootElement != null) return;
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.dark(),
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.storage_rounded, size: 40),
+                const SizedBox(height: 16),
+                const Text(
+                  textAlign: TextAlign.center,
+                  'OpenPanel Go could not open its local storage.',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  textAlign: TextAlign.center,
+                  // The stored boxes hold the project list and cached numbers,
+                  // never a secret — clearing them costs no credentials.
+                  'Reinstall the app to start fresh. Saved projects will need '
+                  'their credentials entered again; your OpenPanel data is not '
+                  'affected.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  // Only ever a local storage error (box path, file format). The
+                  // app never reaches a network call before this point, so there
+                  // is no server body to leak.
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 11),
+                  error.toString(),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     ),
   );

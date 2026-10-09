@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -103,7 +105,11 @@ Future<void> showProjectSwitcher(BuildContext context) {
                       style: const TextStyle(color: AppColors.textMuted),
                     ),
                     onTap: () {
-                      ref.read(activeProjectIdProvider.notifier).select(p.id);
+                      // `select` never throws: it swallows its own persistence
+                      // failure after applying the in-memory selection.
+                      unawaited(
+                        ref.read(activeProjectIdProvider.notifier).select(p.id),
+                      );
                       Navigator.of(ctx).pop();
                     },
                   ),
@@ -113,7 +119,9 @@ Future<void> showProjectSwitcher(BuildContext context) {
                   title: const Text('Add project'),
                   onTap: () {
                     Navigator.of(ctx).pop();
-                    context.push('/login');
+                    // Completes when the pushed route is popped; nothing
+                    // observes it, and go_router surfaces route errors itself.
+                    unawaited(context.push('/login'));
                   },
                 ),
               ],

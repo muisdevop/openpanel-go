@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -104,7 +105,13 @@ class LocalStore {
     final raw = _cache.get(key);
     if (raw == null) return null;
     final value = _unwrap(raw, maxAge);
-    if (value == null) _cache.delete(key);
+    if (value == null) {
+      // Expired or unreadable envelope. `readCache` runs inside provider
+      // builds and stays synchronous, so the delete can't be awaited. Losing it
+      // costs only space: `_pruneCache` collects the same set (null stamp or
+      // age > maxAge) on the next write, and nothing serves this key meanwhile.
+      unawaited(_cache.delete(key));
+    }
     return value;
   }
 

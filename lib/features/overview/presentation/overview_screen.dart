@@ -63,6 +63,12 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen>
       // The provider already holds the error for the cards to display; the
       // gesture only needs to know whether to show a failed spinner.
       return e.isSilent;
+    } catch (_) {
+      // A `StateError` from a container disposed under the refresh, or anything
+      // the repositories didn't wrap. Only `on ApiException` used to be caught
+      // here, so the rest escaped through `onTick` into the zone — the spinner
+      // never resolved and the failure left no trace on screen.
+      return false;
     }
   }
 

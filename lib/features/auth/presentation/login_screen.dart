@@ -83,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _secret.text = _envSecret;
       _name.text = _envName;
     }
-    _loadExisting();
+    unawaited(_loadExisting());
   }
 
   Future<void> _loadExisting() async {
@@ -94,7 +94,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .where((p) => p.id == id)
         .firstOrNull;
     if (project == null) return;
-    final clientId = await ref.read(authRepositoryProvider).readClientId(id);
+    final String? clientId;
+    try {
+      clientId = await ref.read(authRepositoryProvider).readClientId(id);
+    } on Object catch (e, st) {
+      // A keystore read failure (lock screen quirks, a corrupted entry) used to
+      // escape as an unhandled async error: the form stayed blank, so the user
+      // saw an empty edit screen with no way to know the saved client ID was
+      // unreadable and could submit a blank one over it. Kept out of `detail` —
+      // the banner prefixes that line with "Server:", and this is local.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'auth',
+          context: ErrorDescription(
+            'while loading a saved project for editing',
+          ),
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _error = const ApiException(
+          ApiErrorKind.unknown,
+          'Could not read this project\'s saved client ID. Re-enter it to '
+          'finish editing.',
+        );
+      });
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _editing = project;

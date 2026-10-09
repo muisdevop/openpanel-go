@@ -15,6 +15,13 @@ linter:
     # A future dropped behind a tap handler is how the project-selection and
     # pull-to-refresh bugs landed (unawaited select/set, unawaited clipboard).
     - unawaited_futures
+    # Stronger, and the one that matters for the release crash: `unawaited_futures`
+    # only fires inside an async body, so a future dropped in a void callback or a
+    # synchronous method passed it. Any discarded future is an error nobody can
+    # catch, because the only handler left is the zone's. Where dropping one is
+    # deliberate, the call says so with `unawaited(...)` — which the lint accepts
+    # — and carries the reason why nothing can throw into it.
+    - discarded_futures
     # Import drift made every diff in review harder to read.
     - directives_ordering
     # Leaked animation/subscription handles (the pulsing live dot, polling

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
@@ -49,15 +51,19 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
   void _openFull(Breakdown b) {
     final items = ref.read(breakdownProvider(b)).value ?? const [];
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.7,
-        maxChildSize: 0.95,
-        builder: (ctx, scroll) =>
-            _FullBreakdownList(breakdown: b, items: items, scroll: scroll),
+    // The future completes when the sheet is dismissed; nothing acts on that,
+    // and a throwing builder is already reported by the framework.
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          maxChildSize: 0.95,
+          builder: (ctx, scroll) =>
+              _FullBreakdownList(breakdown: b, items: items, scroll: scroll),
+        ),
       ),
     );
   }
